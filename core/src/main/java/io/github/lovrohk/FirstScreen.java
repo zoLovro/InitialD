@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -23,20 +24,22 @@ public class FirstScreen implements Screen {
 
     float speedX = 0;
     float speedY = 0;
-    float maxSpeed = 25;
-    float acceleration = 0.8f;
+    float maxSpeed = 300;
+    float acceleration = 5f;
     float centerX;
     float centerY;
 
     public FirstScreen() {
-        viewport = new ExtendViewport(40, 30);
+        viewport = new ExtendViewport(200, 200);
         spriteBatch = new SpriteBatch();
-        ae86Texture = new Texture(Gdx.files.internal("cars/ae86.jpg"));
-        ae86Sprite = new Sprite(ae86Texture);
-        ae86Sprite.setSize(2,2);
+        ae86Texture = new Texture(Gdx.files.internal("cars/ae86.png"));
+        TextureRegion ae86_closed = new TextureRegion(ae86Texture, 0, 0, 24, 44);
+        TextureRegion ar86_open = new TextureRegion(ae86Texture, 24, 0, 24, 44);
+        ae86Sprite = new Sprite(ae86_closed);
+        ae86Sprite.setSize(24,44);
         ae86Sprite.setPosition(32, 13);
 
-        roadMap = new Pixmap(Gdx.files.internal("maps/map_black.png"));
+        roadMap = new Pixmap(Gdx.files.internal("maps/basicCircuit.png"));
         roadTexture = new Texture(roadMap);
     }
 

@@ -1,5 +1,6 @@
 .gitkeep
-cars/ae86.jpg
+cars/ae86.png
+maps/basicCircuit.png
 maps/map_black.png
 music/album1/01justAGame.mp3
 music/album1/02SoftTime.mp3
