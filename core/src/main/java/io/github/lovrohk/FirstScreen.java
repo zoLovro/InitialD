@@ -16,7 +16,7 @@ public class FirstScreen implements Screen {
     ExtendViewport viewport;
     SpriteBatch spriteBatch;
     Texture ae86Texture;
-    Sprite ae68Sprite;
+    Sprite ae86Sprite;
 
     Pixmap roadMap;
     Texture roadTexture;
@@ -25,33 +25,42 @@ public class FirstScreen implements Screen {
 
     float speedX = 0;
     float speedY = 0;
-    float maxSpeed = 500;
-    float acceleration = 10f;
+    float maxSpeed = 100;
+    float acceleration = 5f;
 
     public FirstScreen() {
-        viewport = new ExtendViewport(1920, 1080);
+        viewport = new ExtendViewport(40, 30);
         spriteBatch = new SpriteBatch();
         ae86Texture = new Texture(Gdx.files.internal("cars/ae86.jpg"));
-        ae68Sprite = new Sprite(ae86Texture);
+        ae86Sprite = new Sprite(ae86Texture);
+        ae86Sprite.setSize(2,2);
 
-        roadMap = new Pixmap(Gdx.files.internal("maps/black_map.png "));
+        roadMap = new Pixmap(Gdx.files.internal("maps/map_black.png "));
         roadTexture = new Texture(roadMap);
     }
 
     @Override
     public void render(float delta) {
         float angle = (float) Math.toDegrees(Math.atan2(speedY, speedX));
-        ScreenUtils.clear(Color.WHITE);
+        ScreenUtils.clear(Color.GREEN);
+        float centerX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
+        float centerY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
+
+        //camera
+        viewport.getCamera().position.set(centerX, centerY, 0);
+        viewport.getCamera().update();
+
         viewport.apply();
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
         spriteBatch.begin();
+
         spriteBatch.draw(roadTexture, 0, 0);
         logic();
         input(delta);
-        ae68Sprite.draw(spriteBatch);
-        ae68Sprite.setOriginCenter();
+        ae86Sprite.draw(spriteBatch);
+        ae86Sprite.setOriginCenter();
         if (speedX != 0 || speedY != 0) {
-            ae68Sprite.setRotation(angle - 90);
+            ae86Sprite.setRotation(angle - 90);
         }
 
         spriteBatch.end();
@@ -86,23 +95,30 @@ public class FirstScreen implements Screen {
             if (Math.abs(speedX) < acceleration) speedX = 0;
         }
 
-        ae68Sprite.translate(speedX * delta, speedY * delta);
+        ae86Sprite.translate(speedX * delta, speedY * delta);
     }
 
     private void logic() {
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
-        float spriteX = ae68Sprite.getX();
-        float spriteY = ae68Sprite.getY();
+        float spriteX = ae86Sprite.getX();
+        float spriteY = ae86Sprite.getY();
+
+        float mapHeight = roadMap.getHeight();
+        float mapWidth = roadMap.getWidth();
 
         // collisions with screen edges (for now before my map is implemented)
-        if (spriteX < 0 || spriteX + ae68Sprite.getWidth() > worldWidth ||
-            spriteY < 0 || spriteY + ae68Sprite.getHeight() > worldHeight) {
-            ae68Sprite.setPosition(100, 100);
+        /*if (spriteX < 0 || spriteX + ae86Sprite.getWidth() > worldWidth ||
+            spriteY < 0 || spriteY + ae86Sprite.getHeight() > worldHeight) {
+            ae86Sprite.setPosition(100, 100);
             speedX = 0;
             speedY = 0;
         }
+         */
+
+        //camera
+
 
 
     }

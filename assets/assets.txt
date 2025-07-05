@@ -1,6 +1,6 @@
 .gitkeep
 cars/ae86.jpg
-maps/black_map.png
+maps/map_black.png
 music/album1/01justAGame.mp3
 music/album1/02SoftTime.mp3
 music/album1/03LovePassion.mp3
