@@ -20,13 +20,13 @@ public class FirstScreen implements Screen {
 
     Pixmap roadMap;
     Texture roadTexture;
-    int pixel;
-    Color color;
 
     float speedX = 0;
     float speedY = 0;
-    float maxSpeed = 100;
-    float acceleration = 5f;
+    float maxSpeed = 25;
+    float acceleration = 0.8f;
+    float centerX;
+    float centerY;
 
     public FirstScreen() {
         viewport = new ExtendViewport(40, 30);
@@ -34,17 +34,18 @@ public class FirstScreen implements Screen {
         ae86Texture = new Texture(Gdx.files.internal("cars/ae86.jpg"));
         ae86Sprite = new Sprite(ae86Texture);
         ae86Sprite.setSize(2,2);
+        ae86Sprite.setPosition(32, 13);
 
-        roadMap = new Pixmap(Gdx.files.internal("maps/map_black.png "));
+        roadMap = new Pixmap(Gdx.files.internal("maps/map_black.png"));
         roadTexture = new Texture(roadMap);
     }
 
     @Override
     public void render(float delta) {
         float angle = (float) Math.toDegrees(Math.atan2(speedY, speedX));
-        ScreenUtils.clear(Color.GREEN);
-        float centerX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
-        float centerY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
+        ScreenUtils.clear(Color.WHITE);
+        centerX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
+        centerY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
 
         //camera
         viewport.getCamera().position.set(centerX, centerY, 0);
@@ -108,16 +109,13 @@ public class FirstScreen implements Screen {
         float mapHeight = roadMap.getHeight();
         float mapWidth = roadMap.getWidth();
 
-        // collisions with screen edges (for now before my map is implemented)
-        /*if (spriteX < 0 || spriteX + ae86Sprite.getWidth() > worldWidth ||
-            spriteY < 0 || spriteY + ae86Sprite.getHeight() > worldHeight) {
-            ae86Sprite.setPosition(100, 100);
-            speedX = 0;
-            speedY = 0;
+        // checking if im on the road or not
+        int pixel = roadMap.getPixel((int) spriteX, (int) spriteY);
+        Color color = new Color();
+        Color.rgba8888ToColor(color, pixel); // extracts RGBA components from raw pixel
+        if(!color.equals(Color.BLACK)) {
+            System.out.println("Nisic");
         }
-         */
-
-        //camera
 
 
 
