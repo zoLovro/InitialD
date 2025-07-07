@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
@@ -18,23 +19,28 @@ public class FirstScreen implements Screen {
     SpriteBatch spriteBatch;
     Texture ae86Texture;
     Sprite ae86Sprite;
+    TextureRegion ae86_closed;
+    TextureRegion ae86_open;
+    boolean lightsOpen = false;
 
     Pixmap roadMap;
     Texture roadTexture;
 
-    float speedX = 0;
-    float speedY = 0;
-    float maxSpeed = 300;
-    float acceleration = 5f;
+    Vector2 position = new Vector2(32,13);
+    Vector2 velocity = new Vector2(0, 0);
+    float maxSpeed = 150;
+    float rotationDeg = 0;
+    float acceleration = 10f;
     float centerX;
     float centerY;
+    int[] checkpoint = {100, 100};
 
     public FirstScreen() {
-        viewport = new ExtendViewport(200, 200);
+        viewport = new ExtendViewport(300, 300);
         spriteBatch = new SpriteBatch();
         ae86Texture = new Texture(Gdx.files.internal("cars/ae86.png"));
-        TextureRegion ae86_closed = new TextureRegion(ae86Texture, 0, 0, 24, 44);
-        TextureRegion ar86_open = new TextureRegion(ae86Texture, 24, 0, 24, 44);
+        ae86_closed = new TextureRegion(ae86Texture, 0, 0, 24, 44);
+        ae86_open = new TextureRegion(ae86Texture, 24, 0, 24, 44);
         ae86Sprite = new Sprite(ae86_closed);
         ae86Sprite.setSize(24,44);
         ae86Sprite.setPosition(32, 13);
@@ -45,7 +51,6 @@ public class FirstScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        float angle = (float) Math.toDegrees(Math.atan2(speedY, speedX));
         ScreenUtils.clear(Color.WHITE);
         centerX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
         centerY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
@@ -63,65 +68,73 @@ public class FirstScreen implements Screen {
         input(delta);
         ae86Sprite.draw(spriteBatch);
         ae86Sprite.setOriginCenter();
-        if (speedX != 0 || speedY != 0) {
-            ae86Sprite.setRotation(angle - 90);
-        }
 
         spriteBatch.end();
     }
 
     private void input(float delta) {
-        // Y axis
+        // Sprite change
+        if(Gdx.input.isKeyPressed(Input.Keys.M) && !lightsOpen) {
+            ae86Sprite = new Sprite(ae86_open);
+            lightsOpen = true;
+        } else if(Gdx.input.isKeyPressed(Input.Keys.M) && lightsOpen) {
+            ae86Sprite = new Sprite(ae86_closed);
+            lightsOpen = false;
+        }
+
+        Vector2 forward = new Vector2(MathUtils.cosDeg(rotationDeg), MathUtils.sinDeg(rotationDeg));
+        float turnSpeed = 100f;
+
+        // Accelerate forward/backward
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            speedY += acceleration;
-            if (speedY > maxSpeed) speedY = maxSpeed;
-        } else if(Gdx.input.isKeyPressed(Input.Keys.S)) {
-            speedY -= acceleration;
-            if (speedY < -maxSpeed) speedY = -maxSpeed;
-        }
-        else {
-            if(speedY > 0) speedY -= acceleration;
-            else if (speedY < 0) speedY += acceleration;
-            if (Math.abs(speedY) < acceleration) speedY = 0;
+            velocity.add(forward.cpy().scl(acceleration * delta));
+        } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            velocity.sub(forward.cpy().scl(acceleration * delta));
         }
 
-        // X axis
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            speedX += acceleration;
-            if (speedX > maxSpeed) speedX = maxSpeed;
-        } else if(Gdx.input.isKeyPressed(Input.Keys.A)) {
-            speedX -= acceleration;
-            if (speedX < -maxSpeed) speedX = -maxSpeed;
-        }
-        else {
-            if(speedX > 0) speedX -= acceleration;
-            else if (speedX < 0) speedX += acceleration;
-            if (Math.abs(speedX) < acceleration) speedX = 0;
+        // Cap to max speed
+        if (velocity.len() > maxSpeed) {
+            velocity.setLength(maxSpeed);
         }
 
-        ae86Sprite.translate(speedX * delta, speedY * delta);
+        // Turn left/right
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            rotationDeg += turnSpeed * delta;
+        } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            rotationDeg -= turnSpeed * delta;
+        }
+
+        // Drift grip: remove sideways movement
+        Vector2 forwardDir = new Vector2(MathUtils.cosDeg(rotationDeg), MathUtils.sinDeg(rotationDeg));
+        Vector2 lateral = velocity.cpy().sub(forwardDir.cpy().scl(velocity.dot(forwardDir)));
+        velocity.sub(lateral.scl(0.02f));
+
+        // Drag/friction
+        velocity.scl(0.98f);
+
+        // Move car
+        position.add(velocity.cpy());
+        ae86Sprite.setPosition(position.x, position.y);
+        ae86Sprite.setRotation(rotationDeg - 90);
     }
 
+
     private void logic() {
-        float worldWidth = viewport.getWorldWidth();
-        float worldHeight = viewport.getWorldHeight();
+        float spriteCenterX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
+        float spriteCenterY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
 
-        float spriteX = ae86Sprite.getX();
-        float spriteY = ae86Sprite.getY();
-
-        float mapHeight = roadMap.getHeight();
-        float mapWidth = roadMap.getWidth();
+        int pixelX = MathUtils.clamp((int) spriteCenterX, 0, roadMap.getWidth() - 1);
+        int pixelY = MathUtils.clamp((int) spriteCenterY, 0, roadMap.getHeight() - 1);
 
         // checking if im on the road or not
-        int pixel = roadMap.getPixel((int) spriteX, (int) spriteY);
+        int pixel = roadMap.getPixel(pixelX, pixelY);
         Color color = new Color();
         Color.rgba8888ToColor(color, pixel); // extracts RGBA components from raw pixel
-        if(!color.equals(Color.BLACK)) {
-            System.out.println("Nisic");
+        Color target = Color.valueOf("#302f2f");
+        if(!color.equals(target)) {
+            ae86Sprite.setPosition(checkpoint[0], checkpoint[1]);
+            //velocity.scl(0);
         }
-
-
-
     }
 
     @Override
