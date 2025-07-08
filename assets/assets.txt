@@ -1,6 +1,9 @@
 .gitkeep
 cars/ae86.png
+maps/New_Piskel.png
+maps/New_Piskel.tsx
 maps/basicCircuit.png
+maps/basicCircuit.tmx
 maps/map_black.png
 music/album1/01justAGame.mp3
 music/album1/02SoftTime.mp3

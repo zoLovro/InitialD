@@ -4,11 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -25,6 +30,9 @@ public class FirstScreen implements Screen {
 
     Pixmap roadMap;
     Texture roadTexture;
+    TmxMapLoader tmxMapLoader = new TmxMapLoader();
+    TiledMap map = tmxMapLoader.load("maps/basicCircuit.tmx");
+    OrthogonalTiledMapRenderer renderer = new OrthogonalTiledMapRenderer(map);
 
     Vector2 position = new Vector2(32,13);
     Vector2 velocity = new Vector2(0, 0);
@@ -33,7 +41,7 @@ public class FirstScreen implements Screen {
     float acceleration = 10f;
     float centerX;
     float centerY;
-    int[] checkpoint = {100, 100};
+
 
     public FirstScreen() {
         viewport = new ExtendViewport(300, 300);
@@ -44,9 +52,6 @@ public class FirstScreen implements Screen {
         ae86Sprite = new Sprite(ae86_closed);
         ae86Sprite.setSize(24,44);
         ae86Sprite.setPosition(32, 13);
-
-        roadMap = new Pixmap(Gdx.files.internal("maps/basicCircuit.png"));
-        roadTexture = new Texture(roadMap);
     }
 
     @Override
@@ -63,11 +68,12 @@ public class FirstScreen implements Screen {
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
         spriteBatch.begin();
 
-        spriteBatch.draw(roadTexture, 0, 0);
         logic();
         input(delta);
         ae86Sprite.draw(spriteBatch);
         ae86Sprite.setOriginCenter();
+        renderer.setView((OrthographicCamera) viewport.getCamera());
+        renderer.render();
 
         spriteBatch.end();
     }
@@ -120,20 +126,19 @@ public class FirstScreen implements Screen {
 
 
     private void logic() {
+        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) map.getLayers().get("Collision");
         float spriteCenterX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
         float spriteCenterY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
 
-        int pixelX = MathUtils.clamp((int) spriteCenterX, 0, roadMap.getWidth() - 1);
-        int pixelY = MathUtils.clamp((int) spriteCenterY, 0, roadMap.getHeight() - 1);
+        int tileX = (int) (spriteCenterX / collisionLayer.getTileWidth());
+        int tileY = (int) (spriteCenterY / collisionLayer.getTileHeight());
+
+        TiledMapTileLayer.Cell cell = collisionLayer.getCell(tileX, tileY);
 
         // checking if im on the road or not
-        int pixel = roadMap.getPixel(pixelX, pixelY);
-        Color color = new Color();
-        Color.rgba8888ToColor(color, pixel); // extracts RGBA components from raw pixel
-        Color target = Color.valueOf("#302f2f");
-        if(!color.equals(target)) {
-            ae86Sprite.setPosition(checkpoint[0], checkpoint[1]);
-            //velocity.scl(0);
+        if (cell != null) {
+            System.out.println("a");
+            System.out.println("NullPointerException");
         }
     }
 
