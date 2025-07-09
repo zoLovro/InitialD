@@ -42,104 +42,130 @@ public class FirstScreen implements Screen {
     float centerX;
     float centerY;
 
+    OrthographicCamera camera;
+
 
     public FirstScreen() {
         viewport = new ExtendViewport(300, 300);
         spriteBatch = new SpriteBatch();
+
         ae86Texture = new Texture(Gdx.files.internal("cars/ae86.png"));
         ae86_closed = new TextureRegion(ae86Texture, 0, 0, 24, 44);
         ae86_open = new TextureRegion(ae86Texture, 24, 0, 24, 44);
         ae86Sprite = new Sprite(ae86_closed);
         ae86Sprite.setSize(24,44);
-        ae86Sprite.setPosition(32, 13);
+        ae86Sprite.setPosition(300, 100);
     }
 
     @Override
     public void render(float delta) {
         ScreenUtils.clear(Color.WHITE);
+
         centerX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
         centerY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
 
-        //camera
-        viewport.getCamera().position.set(centerX, centerY, 0);
-        viewport.getCamera().update();
+        // Explicitly center the camera on the car
+        camera = (OrthographicCamera) viewport.getCamera();
+        camera.position.set(ae86Sprite.getX() + ae86Sprite.getWidth() / 2f,
+            ae86Sprite.getY() + ae86Sprite.getHeight() / 2f,
+            0);
 
+        // Clamp camera so it stays within map bounds
+        TiledMapTileLayer baseLayer = (TiledMapTileLayer) map.getLayers().get(0);
+        float mapWidth = baseLayer.getWidth() * baseLayer.getTileWidth();
+        float mapHeight = baseLayer.getHeight() * baseLayer.getTileHeight();
+        float halfWidth = camera.viewportWidth * 0.5f * camera.zoom;
+        float halfHeight = camera.viewportHeight * 0.5f * camera.zoom;
+
+        camera.position.x = MathUtils.clamp(camera.position.x, halfWidth - 128, mapWidth - halfWidth - 128);
+        camera.position.y = MathUtils.clamp(camera.position.y, halfHeight, mapHeight - halfHeight);
+        camera.update();
+
+        // Apply camera projection
         viewport.apply();
-        spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
+        spriteBatch.setProjectionMatrix(camera.combined);
+
+        // Render map
+        renderer.setView(camera);
+        renderer.render();
+
+        // Game logic and input
         spriteBatch.begin();
 
         logic();
         input(delta);
         ae86Sprite.draw(spriteBatch);
         ae86Sprite.setOriginCenter();
-        renderer.setView((OrthographicCamera) viewport.getCamera());
-        renderer.render();
 
         spriteBatch.end();
     }
 
     private void input(float delta) {
-        // Sprite change
-        if(Gdx.input.isKeyPressed(Input.Keys.M) && !lightsOpen) {
-            ae86Sprite = new Sprite(ae86_open);
-            lightsOpen = true;
-        } else if(Gdx.input.isKeyPressed(Input.Keys.M) && lightsOpen) {
-            ae86Sprite = new Sprite(ae86_closed);
-            lightsOpen = false;
-        }
-
         Vector2 forward = new Vector2(MathUtils.cosDeg(rotationDeg), MathUtils.sinDeg(rotationDeg));
         float turnSpeed = 100f;
 
-        // Accelerate forward/backward
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            velocity.add(forward.cpy().scl(acceleration * delta));
-        } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            velocity.sub(forward.cpy().scl(acceleration * delta));
-        }
-
-        // Cap to max speed
-        if (velocity.len() > maxSpeed) {
-            velocity.setLength(maxSpeed);
-        }
-
-        // Turn left/right
+        // Handle rotation
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             rotationDeg += turnSpeed * delta;
         } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
             rotationDeg -= turnSpeed * delta;
         }
 
-        // Drift grip: remove sideways movement
+        // Apply acceleration
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            velocity.add(forward.cpy().scl(acceleration * delta));
+        } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            velocity.sub(forward.cpy().scl(acceleration * delta));
+        }
+
+        // Limit speed
+        if (velocity.len() > maxSpeed) {
+            velocity.setLength(maxSpeed);
+        }
+
+        // Drift grip
         Vector2 forwardDir = new Vector2(MathUtils.cosDeg(rotationDeg), MathUtils.sinDeg(rotationDeg));
         Vector2 lateral = velocity.cpy().sub(forwardDir.cpy().scl(velocity.dot(forwardDir)));
         velocity.sub(lateral.scl(0.02f));
 
-        // Drag/friction
+        // Friction
         velocity.scl(0.98f);
 
-        // Move car
-        position.add(velocity.cpy());
+        // Try move on X
+        Vector2 testX = new Vector2(position.x + velocity.x, position.y);
+        if (!isCollision(testX)) {
+            position.x += velocity.x;
+        } else {
+            velocity.x = 0;
+        }
+
+        // Try move on Y
+        Vector2 testY = new Vector2(position.x, position.y + velocity.y);
+        if (!isCollision(testY)) {
+            position.y += velocity.y;
+        } else {
+            velocity.y = 0;
+        }
+
         ae86Sprite.setPosition(position.x, position.y);
         ae86Sprite.setRotation(rotationDeg - 90);
     }
 
-
-    private void logic() {
+    private boolean isCollision(Vector2 pos) {
         TiledMapTileLayer collisionLayer = (TiledMapTileLayer) map.getLayers().get("Collision");
-        float spriteCenterX = ae86Sprite.getX() + ae86Sprite.getWidth() / 2f;
-        float spriteCenterY = ae86Sprite.getY() + ae86Sprite.getHeight() / 2f;
+        float spriteCenterX = pos.x + ae86Sprite.getWidth() / 2f;
+        float spriteCenterY = pos.y + ae86Sprite.getHeight() / 2f;
 
         int tileX = (int) (spriteCenterX / collisionLayer.getTileWidth());
         int tileY = (int) (spriteCenterY / collisionLayer.getTileHeight());
 
         TiledMapTileLayer.Cell cell = collisionLayer.getCell(tileX, tileY);
+        return cell != null;
+    }
 
-        // checking if im on the road or not
-        if (cell != null) {
-            System.out.println("a");
-            System.out.println("NullPointerException");
-        }
+
+    private void logic() {
+
     }
 
     @Override
