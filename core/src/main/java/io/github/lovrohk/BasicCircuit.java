@@ -19,7 +19,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
-public class FirstScreen implements Screen {
+public class BasicCircuit implements Screen {
     ExtendViewport viewport;
     SpriteBatch spriteBatch;
     Texture ae86Texture;
@@ -45,7 +45,7 @@ public class FirstScreen implements Screen {
     OrthographicCamera camera;
 
 
-    public FirstScreen() {
+    public BasicCircuit() {
         viewport = new ExtendViewport(300, 300);
         spriteBatch = new SpriteBatch();
 
