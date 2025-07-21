@@ -1,2 +1,5 @@
 * text=auto eol=lf
 *.bat text=auto eol=crlf
+
+*.html linguist-generated
+*.java linguist-detectable=true
