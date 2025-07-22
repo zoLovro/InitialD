@@ -54,7 +54,8 @@ public class BasicCircuit implements Screen {
         ae86_open = new TextureRegion(ae86Texture, 24, 0, 24, 44);
         ae86Sprite = new Sprite(ae86_closed);
         ae86Sprite.setSize(24,44);
-        ae86Sprite.setPosition(300, 100);
+        position.set(300, 100);
+        ae86Sprite.setPosition(position.x, position.y);
     }
 
     @Override

@@ -38,6 +38,6 @@ public class Main extends Game {
         divine        = Gdx.audio.newMusic(Gdx.files.internal("music/album1/13Divine.mp3"));
 
         // Start with first screen
-        setScreen(new AkinaTrack());
+        setScreen(new BasicCircuit());
     }
 }
